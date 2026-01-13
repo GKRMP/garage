@@ -4,8 +4,8 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-const shopDomain = "k0akkr-kx.myshopify.com";
-const accessToken = "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";
+const shopDomain = process.env.SHOP_DOMAIN;
+const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
 app.post('/apps/customer/vehicles/save', async (req, res) => {
   const { customerId, vehicles } = req.body;
