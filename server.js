@@ -4,8 +4,8 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-const shopDomain = "REMOVED_DOMAIN";
-const accessToken = "REMOVED_TOKEN";
+const shopDomain = process.env.SHOP_DOMAIN;
+const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
 app.post('/apps/customer/vehicles/save', async (req, res) => {
   const { customerId, vehicles } = req.body;
