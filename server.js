@@ -6,7 +6,6 @@ app.use(express.json());
 
 // CORS - Allow requests from your Shopify store
 app.use((req, res, next) => {
-  // Replace with your actual store domain in production
   res.header('Access-Control-Allow-Origin', '*'); 
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -59,8 +58,8 @@ app.post('/apps/customer/vehicles/save', async (req, res) => {
         ownerId: customerGid,
         namespace: "custom",
         key: "garage",
-        type: "list.metaobject_reference",
-        value: JSON.stringify(vehicles)  // Array of metaobject GIDs
+        // Don't specify type - use the existing metafield definition
+        value: JSON.stringify(vehicles)
       }
     ]
   };
