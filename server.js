@@ -4,17 +4,26 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
+// Environment variables
+const shopDomain = process.env.SHOP_DOMAIN;
+const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+const SHOPIFY_API_VERSION = '2024-01';
+
+// Validate required environment variables
+if (!shopDomain || !accessToken) {
+  console.error('ERROR: Missing required environment variables');
+  console.error('Required: SHOP_DOMAIN, SHOPIFY_ACCESS_TOKEN');
+  process.exit(1);
+}
+
 // CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
-
-const shopDomain = process.env.SHOP_DOMAIN;
-const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
 // ============================================
 // GET ALL VEHICLES (with pagination)
@@ -51,7 +60,7 @@ app.get('/apps/vehicles/list', async (req, res) => {
       pageCount++;
       console.log(`Fetching page ${pageCount}...`);
       
-      const response = await fetch(`https://${shopDomain}/admin/api/2024-01/graphql.json`, {
+      const response = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +76,10 @@ app.get('/apps/vehicles/list', async (req, res) => {
       
       if (data.errors) {
         console.error('GraphQL errors:', data.errors);
-        return res.status(400).json({ error: data.errors[0].message });
+        return res.status(400).json({
+          error: data.errors[0].message,
+          errors: data.errors
+        });
       }
       
       const metaobjects = data.data.metaobjects;
@@ -147,8 +159,8 @@ app.post('/apps/customer/vehicles/save', async (req, res) => {
     metafields: [
       {
         ownerId: customerGid,
-        namespace: "custom",
-        key: "garage",
+        namespace: 'custom',
+        key: 'garage',
         value: JSON.stringify(vehicles)
       }
     ]
@@ -158,11 +170,11 @@ app.post('/apps/customer/vehicles/save', async (req, res) => {
   console.log('Vehicles:', vehicles);
 
   try {
-    const response = await fetch(`https://${shopDomain}/admin/api/2024-01/graphql.json`, {
+    const response = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`, {
       method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": accessToken
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken
       },
       body: JSON.stringify({ query: mutation, variables })
     });
@@ -189,8 +201,82 @@ app.post('/apps/customer/vehicles/save', async (req, res) => {
   }
 });
 
-// Health check
+// ============================================
+// GET CUSTOMER GARAGE
+// ============================================
+app.get('/apps/customer/vehicles/get', async (req, res) => {
+  const { customerId } = req.query;
+
+  if (!customerId) {
+    return res.status(400).json({ error: 'customerId is required' });
+  }
+
+  const customerGid = customerId.startsWith('gid://')
+    ? customerId
+    : `gid://shopify/Customer/${customerId}`;
+
+  const query = `
+    query getCustomerMetafield($ownerId: ID!) {
+      customer(id: $ownerId) {
+        id
+        metafield(namespace: "custom", key: "garage") {
+          id
+          namespace
+          key
+          value
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    ownerId: customerGid
+  };
+
+  console.log('Fetching garage for customer:', customerGid);
+
+  try {
+    const response = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken
+      },
+      body: JSON.stringify({ query, variables })
+    });
+
+    const data = await response.json();
+
+    if (data.errors) {
+      console.error('GraphQL errors:', data.errors);
+      return res.status(400).json({
+        error: data.errors[0].message,
+        errors: data.errors
+      });
+    }
+
+    const metafield = data.data.customer?.metafield;
+    const vehicles = metafield ? JSON.parse(metafield.value) : [];
+
+    console.log('Retrieved garage:', vehicles);
+
+    res.json({
+      success: true,
+      vehicles: vehicles,
+      count: vehicles.length
+    });
+
+  } catch (err) {
+    console.error('Server error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// HEALTH CHECK
+// ============================================
 app.get('/health', (req, res) => {
+  console.log('Health check requested');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
