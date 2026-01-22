@@ -6,6 +6,7 @@ backend/.env
 # Dependencies
 node_modules/
 backend/node_modules/
+tools/node_modules/
 
 # Logs
 *.log
@@ -27,6 +28,9 @@ Garage-Theme/
 
 # Support files (local reference only)
 support-files/
+
+# Local tools (run on local machine, not deployed)
+tools/
 
 # Documentation (optional - comment out if you want to track these)
 *.md

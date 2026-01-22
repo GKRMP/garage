@@ -4,12 +4,10 @@
   "description": "Backend API for Shopify Garage feature with vehicle metaobjects",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "import": "node scripts/import-vehicles.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "node-fetch": "^2.6.7",
-    "dotenv": "^16.0.3"
+    "node-fetch": "^2.6.7"
   }
 }

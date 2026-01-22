@@ -122,13 +122,19 @@ npm start
 
 ## Vehicle Data Import
 
-To import vehicle data from CSV into Shopify metaobjects:
+To import vehicle data from CSV into Shopify metaobjects, use the local tools (not deployed to Render):
 
-1. Prepare your CSV file with columns: `Type`, `Year`, `Make`, `Model`, `Style`, `ID`
-
-2. Run the import script:
+1. Navigate to the tools folder:
 ```bash
-node scripts/import-vehicles.js path/to/vehicles.csv
+cd ../tools
+npm install  # First time only
+```
+
+2. Prepare your CSV file with columns: `Type`, `Year`, `Make`, `Model`, `Style`, `ID`
+
+3. Run the import script:
+```bash
+node import-vehicles.js ../support-files/AllVehiclesForGarage-20260122.csv
 ```
 
 The script will:
@@ -147,7 +153,7 @@ Truck,2021,Ford,F-150,XLT,1000002
 
 After testing the import on your dev store:
 
-1. Use the generated `scripts/export-for-production.graphql` file
+1. Use the generated `tools/export-for-production.graphql` file
 2. Open Shopify GraphiQL for your production store
 3. Run the `CreateVehicleDefinition` mutation first (once)
 4. Run each batch mutation sequentially
@@ -156,8 +162,11 @@ After testing the import on your dev store:
 Or simply run the import script on production:
 ```bash
 # Set production env vars
-SHOP_DOMAIN=your-prod-store.myshopify.com node scripts/import-vehicles.js path/to/vehicles.csv
+cd tools
+SHOP_DOMAIN=your-prod-store.myshopify.com node import-vehicles.js ../support-files/vehicles.csv
 ```
+
+**Note**: The import script runs on your local machine, not on Render. It uses the Shopify Admin API to create metaobjects.
 
 ## Frontend Integration
 

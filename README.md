@@ -6,12 +6,15 @@ Complete implementation of the Garage feature for Roberts Motor Parts Inc Shopif
 
 ```
 Garage/
-├── backend/              ← Backend API (synced to Render.com via Git)
+├── backend/              ← Backend API (deployed to Render.com)
 │   ├── server.js         - Express API server
-│   ├── package.json      - Dependencies
-│   ├── scripts/          - Utility scripts
-│   │   └── import-vehicles.js  - Vehicle import script
-│   └── README.md         - Backend documentation
+│   ├── package.json      - Dependencies (minimal, API only)
+│   ├── .env.example      - Environment variable template
+│   └── README.md         - Backend API documentation
+│
+├── tools/                ← Local utility scripts (NOT in git, NOT deployed)
+│   ├── import-vehicles.js  - Vehicle metaobject import script
+│   └── package.json      - Dependencies for local tools
 │
 ├── Garage-Theme/         ← Shopify theme (NOT in git, managed via Shopify CLI)
 │   └── assets/garage.js  - Frontend garage implementation
@@ -40,7 +43,7 @@ Garage/
 - Stored as Shopify metaobjects (type: "vehicle")
 - CSV source: `support-files/AllVehiclesForGarage-20260122.csv`
 - 860 vehicles (Cars and Trucks from 1925-present)
-- Import script: `backend/scripts/import-vehicles.js`
+- Import script: `tools/import-vehicles.js` (run locally)
 
 ## Deployment Workflow
 
@@ -62,22 +65,24 @@ shopify theme push     # Deploy to development theme
 shopify theme push --theme <theme-id>  # Deploy to production
 ```
 
-### Vehicle Data Import
+### Vehicle Data Import (Local Only)
 ```bash
-cd backend/
-node scripts/import-vehicles.js ../support-files/AllVehiclesForGarage-20260122.csv
+cd tools/
+npm install  # First time only
+node import-vehicles.js ../support-files/AllVehiclesForGarage-20260122.csv
 ```
 
 ## Git Configuration
 
 The repository is configured to:
-- ✅ **Track**: Backend API code and scripts only
-- ❌ **Ignore**: Shopify theme, support files, docs, .env files
+- ✅ **Track**: Backend API code only (minimal production code)
+- ❌ **Ignore**: Tools, theme, support files, docs, .env files
 
 This ensures:
-1. Only backend code is deployed to Render
-2. Theme is managed separately via Shopify CLI
-3. No sensitive data or large CSV files in git
+1. Only backend/ folder is deployed to Render (minimal API server)
+2. Tools run locally on your machine, not deployed
+3. Theme is managed separately via Shopify CLI
+4. No sensitive data or large CSV files in git
 
 ## Environment Setup
 
