@@ -1,9 +1,11 @@
 # Environment variables
 .env
 server.env
+backend/.env
 
 # Dependencies
 node_modules/
+backend/node_modules/
 
 # Logs
 *.log
@@ -19,3 +21,19 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Shopify Theme (managed separately via Shopify CLI)
+Garage-Theme/
+
+# Support files (local reference only)
+support-files/
+
+# Documentation (optional - comment out if you want to track these)
+*.md
+!backend/README.md
+
+# Claude AI
+.claude/
+
+# Local preview files
+icon-preview-local.html

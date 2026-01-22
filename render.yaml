@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: garage-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    rootDir: .
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SHOP_DOMAIN
+        sync: false
+      - key: SHOPIFY_ACCESS_TOKEN
+        sync: false

@@ -1,189 +1,118 @@
-# Shopify Garage Function
+# Shopify Garage Project
 
-A backend service for managing customer vehicle garages in a Shopify store. This API allows customers to save and retrieve their vehicles, which will be displayed in a garage icon in the Shopify store header.
+Complete implementation of the Garage feature for Roberts Motor Parts Inc Shopify store.
 
-## Overview
+## Repository Structure
 
-This project provides the backend API for a Shopify garage feature where:
-- A garage icon appears in the far left of the header
-- A badge displays the number of vehicles when customers have vehicles saved
-- Clicking the icon opens a pop-up to manage garage vehicles
-- Customer vehicle data is stored in Shopify customer metafields
-
-## API Endpoints
-
-### 1. Get All Vehicles
 ```
-GET /apps/vehicles/list
-```
-Retrieves all available vehicles from Shopify metaobjects with pagination support.
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 150,
-  "vehicles": [
-    {
-      "gid": "gid://shopify/Metaobject/123",
-      "handle": "2020-ford-f150",
-      "year": 2020,
-      "make": "Ford",
-      "model": "F-150"
-    }
-  ]
-}
+Garage/
+├── backend/              ← Backend API (synced to Render.com via Git)
+│   ├── server.js         - Express API server
+│   ├── package.json      - Dependencies
+│   ├── scripts/          - Utility scripts
+│   │   └── import-vehicles.js  - Vehicle import script
+│   └── README.md         - Backend documentation
+│
+├── Garage-Theme/         ← Shopify theme (NOT in git, managed via Shopify CLI)
+│   └── assets/garage.js  - Frontend garage implementation
+│
+├── support-files/        ← Local reference files (NOT in git)
+│   └── AllVehiclesForGarage-20260122.csv
+│
+└── README.md            ← This file
 ```
 
-### 2. Get Customer Garage
-```
-GET /apps/customer/vehicles/get?customerId={id}
-```
-Retrieves a customer's saved vehicles from their garage.
+## Components
 
-**Query Parameters:**
-- `customerId` - Customer ID (numeric or GID format)
+### 1. Backend API (Render.com)
+- **Deployed to**: https://garage-wl13.onrender.com
+- Provides REST API for vehicle management
+- Handles customer garage metafield storage
+- See `backend/README.md` for full API documentation
 
-**Response:**
-```json
-{
-  "success": true,
-  "vehicles": ["gid://shopify/Metaobject/123"],
-  "count": 1
-}
-```
+### 2. Frontend (Shopify Theme)
+- Located in `Garage-Theme/assets/garage.js`
+- Managed separately via Shopify CLI
+- Integrates with theme header for garage icon
+- Modal-based vehicle selection interface
 
-### 3. Save Customer Garage
-```
-POST /apps/customer/vehicles/save
-```
-Saves vehicles to a customer's garage.
+### 3. Vehicle Data
+- Stored as Shopify metaobjects (type: "vehicle")
+- CSV source: `support-files/AllVehiclesForGarage-20260122.csv`
+- 860 vehicles (Cars and Trucks from 1925-present)
+- Import script: `backend/scripts/import-vehicles.js`
 
-**Request Body:**
-```json
-{
-  "customerId": "123456789",
-  "vehicles": ["gid://shopify/Metaobject/123", "gid://shopify/Metaobject/456"]
-}
-```
+## Deployment Workflow
 
-**Response:**
-```json
-{
-  "success": true,
-  "metafields": [
-    {
-      "id": "gid://shopify/Metafield/789",
-      "namespace": "custom",
-      "key": "garage",
-      "value": "[\"gid://shopify/Metaobject/123\"]"
-    }
-  ]
-}
-```
-
-### 4. Health Check
-```
-GET /health
-```
-Returns server health status.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-01-21T12:00:00.000Z"
-}
-```
-
-## Environment Variables
-
-Create a `.env` file with the following variables:
-
-```env
-SHOP_DOMAIN=your-store.myshopify.com
-SHOPIFY_ACCESS_TOKEN=your_admin_api_access_token
-PORT=3000
-```
-
-## Installation
-
-1. Install dependencies:
+### Backend Changes (Git → Render)
 ```bash
+cd backend/
+# Make changes to server.js or scripts
+git add .
+git commit -m "Description of changes"
+git push origin main
+# Render auto-deploys from the backend/ folder
+```
+
+### Theme Changes (Shopify CLI)
+```bash
+cd Garage-Theme/
+shopify theme dev      # Test locally
+shopify theme push     # Deploy to development theme
+shopify theme push --theme <theme-id>  # Deploy to production
+```
+
+### Vehicle Data Import
+```bash
+cd backend/
+node scripts/import-vehicles.js ../support-files/AllVehiclesForGarage-20260122.csv
+```
+
+## Git Configuration
+
+The repository is configured to:
+- ✅ **Track**: Backend API code and scripts only
+- ❌ **Ignore**: Shopify theme, support files, docs, .env files
+
+This ensures:
+1. Only backend code is deployed to Render
+2. Theme is managed separately via Shopify CLI
+3. No sensitive data or large CSV files in git
+
+## Environment Setup
+
+### Backend Development
+```bash
+cd backend/
+cp .env.example .env
+# Edit .env with your credentials
 npm install
-```
-
-2. Set up environment variables (see above)
-
-3. Start the server:
-```bash
 npm start
 ```
 
-## Frontend Integration
-
-The frontend implementation should:
-
-1. **Header Icon**: Add a garage icon to the far left of the Shopify theme header
-2. **Badge Display**: Show a circular badge with vehicle count when count > 0
-3. **Pop-up Modal**: Create a modal that opens when clicking the garage icon
-4. **Vehicle Management**: Allow customers to add/remove vehicles in the modal
-5. **API Calls**: Use the endpoints above to fetch and save garage data
-
-### Suggested Implementation Steps
-
-1. Modify theme header liquid file (e.g., `sections/header.liquid`)
-2. Add garage icon HTML/CSS in the header
-3. Create a modal component for vehicle selection
-4. Add JavaScript to:
-   - Fetch customer ID from Shopify customer object
-   - Call `/apps/customer/vehicles/get` on page load
-   - Display badge with vehicle count
-   - Load available vehicles from `/apps/vehicles/list`
-   - Save selections via `/apps/customer/vehicles/save`
-
-## Deployment
-
-This project includes a `Procfile` for Heroku deployment:
-
+### Theme Development
 ```bash
-git push heroku main
+cd Garage-Theme/
+shopify theme dev --store=your-dev-store.myshopify.com
 ```
 
-Set environment variables in your hosting platform:
-```bash
-heroku config:set SHOP_DOMAIN=your-store.myshopify.com
-heroku config:set SHOPIFY_ACCESS_TOKEN=your_token
-```
+## Migration: Dev → Production
 
-## Technical Details
+1. **Backend**: Already deployed to Render (same for dev and prod)
+2. **Theme**: Deploy via Shopify CLI to production theme
+3. **Vehicle Data**: Use generated GraphQL script or re-run import script with production credentials
 
-- **Framework**: Express.js
-- **API**: Shopify Admin GraphQL API (2024-01)
-- **Storage**: Customer metafields (namespace: `custom`, key: `garage`)
-- **Vehicle Data**: Stored as metaobjects with type `vehicle`
-- **Pagination**: Supports up to 2,500 vehicles (10 pages × 250 per page)
+See `backend/README.md` for detailed migration instructions.
 
-## CORS
+## Quick Links
 
-The API is configured to accept requests from any origin. For production, consider restricting this to your Shopify store domain:
+- Backend API Docs: `backend/README.md`
+- Live API Health: https://garage-wl13.onrender.com/health
+- Render Dashboard: https://dashboard.render.com
 
-```javascript
-res.header('Access-Control-Allow-Origin', 'https://your-store.myshopify.com');
-```
+## Notes
 
-## Error Handling
-
-All endpoints return consistent error responses:
-
-```json
-{
-  "error": "Error message",
-  "errors": [/* detailed errors */]
-}
-```
-
-HTTP status codes:
-- `200` - Success
-- `400` - Bad request (validation error or GraphQL error)
-- `500` - Server error
+- Backend serves both dev and production stores
+- Vehicle metaobjects are shared across environments
+- Customer garage data is stored in customer metafields
+- Frontend caches vehicle list for 1 hour to reduce API calls
