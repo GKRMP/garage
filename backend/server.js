@@ -1,5 +1,6 @@
 const express = require('express');
 const fetch = require('node-fetch');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
@@ -7,7 +8,7 @@ app.use(express.json());
 // Environment variables
 const shopDomain = process.env.SHOP_DOMAIN;
 const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
-const SHOPIFY_API_VERSION = '2024-01';
+const SHOPIFY_API_VERSION = '2026-01';
 
 // Validate required environment variables
 if (!shopDomain || !accessToken) {
@@ -161,7 +162,8 @@ app.post('/apps/customer/vehicles/save', async (req, res) => {
         ownerId: customerGid,
         namespace: 'custom',
         key: 'garage',
-        value: JSON.stringify(vehicles)
+        value: JSON.stringify(vehicles),
+        type: 'list.metaobject_reference'
       }
     ]
   };
@@ -264,6 +266,89 @@ app.get('/apps/customer/vehicles/get', async (req, res) => {
       success: true,
       vehicles: vehicles,
       count: vehicles.length
+    });
+
+  } catch (err) {
+    console.error('Server error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// GET CUSTOMER GARAGE FOR FILTERS
+// ============================================
+app.get('/apps/customer/vehicles/filters', async (req, res) => {
+  const { customerId } = req.query;
+
+  if (!customerId) {
+    return res.status(400).json({ error: 'customerId is required' });
+  }
+
+  const customerGid = customerId.startsWith('gid://')
+    ? customerId
+    : `gid://shopify/Customer/${customerId}`;
+
+  const query = `
+    query getCustomerMetafield($ownerId: ID!) {
+      customer(id: $ownerId) {
+        id
+        metafield(namespace: "custom", key: "garage") {
+          value
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    ownerId: customerGid
+  };
+
+  console.log('Fetching garage for filters, customer:', customerGid);
+
+  try {
+    const response = await fetch(`https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken
+      },
+      body: JSON.stringify({ query, variables })
+    });
+
+    const data = await response.json();
+
+    if (data.errors) {
+      console.error('GraphQL errors:', data.errors);
+      return res.status(400).json({
+        error: data.errors[0].message,
+        errors: data.errors
+      });
+    }
+
+    const metafield = data.data.customer?.metafield;
+    const vehicles = metafield ? JSON.parse(metafield.value) : [];
+
+    // Extract unique makes and years for filters
+    const makes = [...new Set(vehicles.map(v => v.make))];
+    const years = [...new Set(vehicles.map(v => v.year))].sort((a, b) => b - a);
+    const models = [...new Set(vehicles.map(v => v.model))];
+
+    console.log('Filter data:', { makes, years, models });
+
+    res.json({
+      success: true,
+      vehicles: vehicles,
+      filters: {
+        makes: makes,
+        years: years,
+        models: models
+      },
+      // For convenience, return the first vehicle's data as default
+      defaultFilters: vehicles.length > 0 ? {
+        make: vehicles[0].make,
+        year: vehicles[0].year,
+        model: vehicles[0].model
+      } : null
     });
 
   } catch (err) {

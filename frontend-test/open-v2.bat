@@ -1,0 +1,3 @@
+@echo off
+echo Opening Garage V2 Test Page...
+start index-v2.html

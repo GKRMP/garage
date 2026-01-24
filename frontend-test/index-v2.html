@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garage Feature Test v2 - Auto-Save - Roberts Motor Parts</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+    }
+
+    /* Header Styles */
+    header {
+      background: #1e3a8a;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .garage-icon-container {
+      position: relative;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .garage-icon-container:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .garage-icon {
+      width: 32px;
+      height: 32px;
+      display: block;
+      color: white;
+    }
+
+    .garage-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #e74c3c;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .garage-badge.active {
+      display: flex;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h2 {
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* My Garage at Top */
+    .my-garage-top {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .my-garage-top.active {
+      display: block;
+    }
+
+    .my-garage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .my-garage-header h3 {
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .saving-indicator {
+      font-size: 0.875rem;
+      color: #666;
+      display: none;
+    }
+
+    .my-garage-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .my-garage-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: white;
+      border: 1px solid #d0d0d0;
+      border-radius: 20px;
+      font-size: 0.875rem;
+    }
+
+    .vehicle-chip-text {
+      color: #333;
+    }
+
+    .remove-chip-btn {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+
+    .remove-chip-btn:hover {
+      background: #ffebee;
+      color: #e74c3c;
+    }
+
+    /* Search and Vehicle List */
+    .search-section h4 {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .vehicle-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .vehicle-item {
+      padding: 0.75rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .vehicle-item:hover {
+      background: #f9f9f9;
+      border-color: #3498db;
+    }
+
+    .vehicle-item.selected {
+      background: #e3f2fd;
+      border-color: #3498db;
+    }
+
+    .vehicle-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .vehicle-info {
+      flex: 1;
+    }
+
+    .vehicle-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .vehicle-style {
+      font-size: 0.875rem;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .my-garage-empty {
+      text-align: center;
+      padding: 1rem;
+      color: #999;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    /* Test Controls */
+    .test-controls {
+      background: #fff;
+      padding: 2rem;
+      margin: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .test-controls h3 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .test-control-group {
+      margin-bottom: 1rem;
+    }
+
+    .test-control-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .test-control-group input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .api-status {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+
+    .api-status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .api-status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .feature-badge {
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="garage-icon-container" id="garageIcon">
+      <!-- Garage Icon SVG -->
+      <svg class="garage-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Roof -->
+        <path d="M3 10L12 3L21 10"/>
+        <!-- Garage structure -->
+        <path d="M4 10V21H20V10"/>
+        <!-- Garage door panels -->
+        <line x1="6" y1="13" x2="18" y2="13"/>
+        <line x1="6" y1="16" x2="18" y2="16"/>
+        <line x1="6" y1="19" x2="18" y2="19"/>
+      </svg>
+      <div class="garage-badge" id="garageBadge">0</div>
+    </div>
+    <div class="logo">Roberts Motor Parts</div>
+    <div class="spacer"></div>
+  </header>
+
+  <!-- Test Controls -->
+  <div class="test-controls">
+    <h3>🧪 Test Configuration <span class="feature-badge">AUTO-SAVE</span></h3>
+    <div class="test-control-group">
+      <label>API Base URL:</label>
+      <input type="text" id="apiBaseUrl" value="http://localhost:3000" />
+    </div>
+    <div class="test-control-group">
+      <label>Customer ID (for testing):</label>
+      <input type="text" id="customerId" value="gid://shopify/Customer/123456" />
+    </div>
+    <div id="apiStatus" class="api-status" style="display: none;"></div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>My Garage</h2>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- My Garage at Top -->
+        <div class="my-garage-top" id="myGarageTop">
+          <div class="my-garage-header">
+            <h3>My Garage (<span id="garageCount">0</span>)</h3>
+            <div class="saving-indicator" id="savingIndicator">Saving...</div>
+          </div>
+          <div class="my-garage-chips" id="myGarageList"></div>
+        </div>
+
+        <div class="my-garage-empty" id="emptyGarage">
+          No vehicles in your garage yet. Select vehicles below to add them.
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+          <h4>Add Vehicles</h4>
+          <input
+            type="text"
+            class="search-box"
+            id="searchBox"
+            placeholder="Search by year, make, or model..."
+          />
+        </div>
+
+        <div id="loadingMessage" class="loading">
+          Loading vehicles...
+        </div>
+
+        <div id="vehicleList" class="vehicle-list" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="garage-v2.js"></script>
+</body>
+</html>

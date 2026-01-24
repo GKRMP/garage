@@ -207,7 +207,7 @@ heroku config:set SHOPIFY_ACCESS_TOKEN=your_token
 ## Technical Details
 
 - **Framework**: Express.js
-- **API**: Shopify Admin GraphQL API (2024-01)
+- **API**: Shopify Admin GraphQL API (2026-01)
 - **Storage**: Customer metafields (namespace: `custom`, key: `garage`)
 - **Vehicle Data**: Stored as metaobjects with type `vehicle`
 - **Pagination**: Supports up to 2,500 vehicles (10 pages × 250 per page)
